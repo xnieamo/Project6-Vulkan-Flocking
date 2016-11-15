@@ -15,21 +15,21 @@ struct Particle
 // Binding 0 : Particle storage buffer (read)
 layout(std140, binding = 0) buffer ParticlesA
 {
-   Particle particlesA[ ];
+	Particle particlesA[];
 };
 
 // Binding 1 : Particle storage buffer (write)
 layout(std140, binding = 1) buffer ParticlesB
 {
-   Particle particlesB[ ];
+	Particle particlesB[];
 };
 
-layout (local_size_x = 16, local_size_y = 16) in;
+layout(local_size_x = 16, local_size_y = 16) in;
 
 // LOOK: rule weights and distances, as well as particle count, based off uniforms.
 // The deltaT here has to be updated every frame to account for changes in
 // frame rate.
-layout (binding = 2) uniform UBO
+layout(binding = 2) uniform UBO
 {
 	float deltaT;
 	float rule1Distance;
@@ -43,35 +43,70 @@ layout (binding = 2) uniform UBO
 
 void main()
 {
-		// LOOK: This is very similar to a CUDA kernel.
-		// Right now, the compute shader only advects the particles with their
-		// velocity and handles wrap-around.
-		// TODO: implement flocking behavior.
+	// LOOK: This is very similar to a CUDA kernel.
+	// Right now, the compute shader only advects the particles with their
+	// velocity and handles wrap-around.
+	// TODO: implement flocking behavior.
 
-    // Current SSBO index
-    uint index = gl_GlobalInvocationID.x;
+	// Current SSBO index
+	uint index = gl_GlobalInvocationID.x;
 	// Don't try to write beyond particle count
-    if (index >= ubo.particleCount)
+	if (index >= ubo.particleCount)
 		return;
 
-    // Read position and velocity
-		vec2 vPos = particlesA[index].pos.xy;
-    vec2 vVel = particlesA[index].vel.xy;
+	// Read position and velocity
+	vec2 vPos = particlesA[index].pos.xy;
+	vec2 vVel = particlesA[index].vel.xy;
 
-		// clamp velocity for a more pleasing simulation.
-		vVel = normalize(vVel) * clamp(length(vVel), 0.0, 0.1);
+	// Initialize boid values
+	vec2 center = vec2(0.f, 0.f);
+	vec2 separate = vec2(0.f, 0.f);
+	vec2 cohesion = vec2(0.f, 0.f);
+	float neighborCount = 0.f;
 
-		// kinematic update
-		vPos += vVel * ubo.deltaT;
+	// Boid flocking
+	for (int i = 0; i < ubo.particleCount; i++) {
+		if (index == i) continue;
+		vec2 uPos = particlesA[i].pos.xy;
+		vec2 uVel = particlesA[i].vel.xy;
 
-    // Wrap around boundary
-		if (vPos.x < -1.0) vPos.x = 1.0;
-		if (vPos.x > 1.0) vPos.x = -1.0;
-		if (vPos.y < -1.0) vPos.y = 1.0;
-		if (vPos.y > 1.0) vPos.y = -1.0;
+		float distance = length(uPos - vPos);
+		if (distance < ubo.rule1Distance) {
+			center += uPos;
+			neighborCount += 1.0;
+		}
 
-    particlesB[index].pos.xy = vPos;
+		if (distance < ubo.rule2Distance) {
+			separate -= (uPos - vPos);
+		}
 
-    // Write back
-    particlesB[index].vel.xy = vVel;
+		if (distance < ubo.rule3Distance) {
+			cohesion += uVel;
+		}
+
+	}
+
+	if (neighborCount > 0.01f) {
+		center /= neighborCount;
+		vVel += (center - vPos) * ubo.rule1Scale;
+		vVel += cohesion * ubo.rule3Scale;
+	}
+	vVel += separate * ubo.rule2Scale;
+
+	// clamp velocity for a more pleasing simulation.
+	vVel = normalize(vVel) * clamp(length(vVel), 0.0, 0.1);
+
+	// kinematic update
+	vPos += vVel * ubo.deltaT;
+
+	// Wrap around boundary
+	if (vPos.x < -1.0) vPos.x = 1.0;
+	if (vPos.x > 1.0) vPos.x = -1.0;
+	if (vPos.y < -1.0) vPos.y = 1.0;
+	if (vPos.y > 1.0) vPos.y = -1.0;
+
+	particlesB[index].pos.xy = vPos;
+
+	// Write back
+	particlesB[index].vel.xy = vVel;
 }
