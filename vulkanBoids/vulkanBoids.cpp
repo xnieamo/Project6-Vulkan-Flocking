@@ -35,9 +35,9 @@
 // implementation based off the code here: http://studio.sketchpad.cc/sp/pad/view/ro.9cbgCRcgbPOI6/rev.23
 #define RULE1DISTANCE 0.1f  // cohesion
 #define RULE2DISTANCE 0.05f // separation
-#define RULE3DISTANCE 0.01f // alignment
-#define RULE1SCALE 0.01f
-#define RULE2SCALE 0.02f
+#define RULE3DISTANCE 0.05f // alignment
+#define RULE1SCALE 0.02f
+#define RULE2SCALE 0.05f
 #define RULE3SCALE 0.01f
 
 class VulkanExample : public VulkanExampleBase
@@ -158,7 +158,7 @@ public:
 		{
 			particle.pos = glm::vec2(rDistribution(rGenerator), rDistribution(rGenerator));
 			// TODO: add randomized velocities with a slight scale here, something like 0.1f.
-			particle.vel = (glm::vec2(rDistribution(rGenerator), rDistribution(rGenerator)) + 1.0f) * 0.5f * 0.1f;
+			particle.vel = glm::vec2(rDistribution(rGenerator), rDistribution(rGenerator)) * 0.1f;
 		}
 
 		VkDeviceSize storageBufferSize = particleBuffer.size() * sizeof(Particle);
@@ -358,7 +358,7 @@ public:
 
 		// LOOK: set the pipeline up to interface with our buffers using the
 		// inputState from prepareStorageBuffers()
-		pipelineCreateInfo.pVertexInputState = &vertices.inputState; // indicate to pipeline how to use vertex buffer.
+		pipelineCreateInfo.pVertexInputState = &vertices.inputState;  // indicate to pipeline how to use vertex buffer.
 		pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState; // speculation: is this b/c on some GPUs, vertex buffer input is still semi-fixed-function?
 		pipelineCreateInfo.pRasterizationState = &rasterizationState;
 		pipelineCreateInfo.pColorBlendState = &colorBlendState;
