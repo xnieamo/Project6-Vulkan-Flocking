@@ -9,6 +9,10 @@ Vulkan Flocking: compute and shading in one pipeline!
 ### Introduction
 This project implements a 2D version of the [Reynolds Boid Algorithm](http://www.red3d.com/cwr/boids/). This algorithm simulates flocks of birds or schools of fish moving in groups. The primary purpose of this project is to explore the Vulkan pipeline and see its differences from OpenGL. This code only implements a naive version of this algorithm. The project in [this repository](https://github.com/xnieamo/Project1-CUDA-Flocking) implements a 3D version of the algorithm in CUDA and provides a series of performance analysis as well.
 
+<p align="center">
+  <img src="https://github.com/xnieamo/Project6-Vulkan-Flocking/blob/master/img/Boids.gif?raw=true">
+</p>
+
 ### Questions
 - Why do you think Vulkan expects explicit descriptors for things like generating pipelines and commands?
 Vulkan puts data describing the pipelines and commands in GPU memory. Explicit descriptors allows the GPU to optimize memory usage for the commands during program execution.
